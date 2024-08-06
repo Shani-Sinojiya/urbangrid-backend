@@ -60,6 +60,12 @@ func TrafficController() {
 			if signal.Id == lastActiveSignal {
 				// Move the last active signal to the front of the slice
 				signals = append(signals[:i], signals[i+1:]...)
+
+				// Add the last active signal to the front of the slice
+				err = functions.TurnOffSignal(signal)
+				if err != nil {
+					log.Printf("Error activing turning off signal %s: %v", d.Id, err)
+				}
 				break
 			}
 		}
