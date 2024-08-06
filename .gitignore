@@ -4,3 +4,6 @@ temp
 *.exe*
 
 *.*db*
+
+uploads/*
+!uploads/.gitkeep
