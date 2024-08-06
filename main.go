@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/hibiken/asynq"
@@ -24,6 +25,7 @@ func main() {
 	app := fiber.New()
 
 	app.Use(recover.New())
+	app.Use(cors.New())
 
 	app.Use(logger.New(logger.Config{
 		Format:     "[${ip}]:${port} ${time} ${status} - ${method} ${latency} ${path}\n",
