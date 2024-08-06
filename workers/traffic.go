@@ -56,10 +56,10 @@ func TrafficController() {
 		lastActiveSignal := currentTimer.LastActiveSignal
 
 		// Get the last active signal
-		for _, signal := range signals {
+		for i, signal := range signals {
 			if signal.Id == lastActiveSignal {
 				// Move the last active signal to the front of the slice
-				signals = append(signals[:0], append(signals[1:], signal)...)
+				signals = append(signals[:i], signals[i+1:]...)
 				break
 			}
 		}
