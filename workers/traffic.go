@@ -77,15 +77,16 @@ func TrafficController() {
 
 		// Set the new timer for the next signal change
 		nextChangeTime := now.Add(time.Duration(clearanceTime) * time.Second)
-		err = functions.SetSignalTimer(nextChangeTime, signal.Id)
-		if err != nil {
-			log.Printf("Error setting signal timer: %v", err)
-		}
 
 		// Turn on the signal with the highest count and set duration
 		err = functions.TurnOnSignal(signal)
 		if err != nil {
 			log.Printf("Error turning on signal %s: %v", signal.Id, err)
+		}
+		err = functions.SetSignalTimer(nextChangeTime, signal.Id)
+
+		if err != nil {
+			log.Printf("Error setting signal timer: %v", err)
 		}
 
 		defer queues.EnqueueTask(asynq.NewTask(constants.SIGNAL_CHANGE, []byte("")))
