@@ -46,12 +46,14 @@ type Accident struct {
 func GetAccidents() (bool, []Accident, error) {
 	cursor, err := collections.Accident().Aggregate(context.Background(), bson.A{
 		bson.M{
-			"deletedAt": bson.M{
-				"$exists": false,
+			"$match": bson.M{
+				"deletedAt": bson.M{
+					"$exists": false,
+				},
 			},
 		},
 		bson.M{
-			"$lockup": bson.M{
+			"$lookup": bson.M{
 				"from":         "files",
 				"localField":   "img",
 				"foreignField": "_id",
