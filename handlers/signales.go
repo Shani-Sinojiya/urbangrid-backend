@@ -57,12 +57,13 @@ func GetSignalUpdate(c *fiber.Ctx) error {
 	}
 
 	parsedTime, _ := time.Parse(time.RFC3339, timer.Timer)
+	seconds := int(time.Since(parsedTime).Seconds())
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":    "Signal data",
 		"success":    true,
 		"data":       data,
-		"greentimer": time.Since(parsedTime),
+		"greentimer": seconds,
 	})
 }
 
