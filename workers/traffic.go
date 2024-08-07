@@ -52,58 +52,70 @@ func TrafficController() {
 			return
 		}
 
-		// expect the last active signal
-		lastActiveSignal := currentTimer.LastActiveSignal
-
-		// Get the last active signal
-		for i, signal := range signals {
-			if signal.Id == lastActiveSignal {
-				// Move the last active signal to the front of the slice
-				signals = append(signals[:i], signals[i+1:]...)
-
-				// Add the last active signal to the front of the slice
-				err = functions.TurnOffSignal(signal)
-				if err != nil {
-					log.Printf("Error activing turning off signal %s: %v", signal.Id, err)
-				}
-				break
-			}
-		}
-
-		// Sort signals by vehicle count in descending order
-		sort.Slice(signals, func(i, j int) bool {
-			return signals[i].Count > signals[j].Count
-		})
-
-		// Get the signal with the highest count
-		signal := signals[0]
-
-		// Calculate the predicted clearance time
-		clearanceTime := predictClearanceTime(signal.Count)
-
-		// Set the new timer for the next signal change
-		nextChangeTime := now.Add(time.Duration(clearanceTime) * time.Second)
-
-		// Turn on the signal with the highest count and set duration
-		err = functions.TurnOnSignal(signal)
-		if err != nil {
-			log.Printf("Error turning on signal %s: %v", signal.Id, err)
-		}
-		err = functions.SetSignalTimer(nextChangeTime, signal.Id)
-
-		if err != nil {
-			log.Printf("Error setting signal timer: %v", err)
-		}
-
-		defer queues.EnqueueTask(asynq.NewTask(constants.SIGNAL_CHANGE, []byte("")))
-
-		// Turn off all other signals
-		for _, d := range signals[1:] {
-			err = functions.TurnOffSignal(d)
+		if len(signals) == 1 {
+			err = functions.TurnOnSignal(signals[0])
 			if err != nil {
-				log.Printf("Error turning off signal %s: %v", d.Id, err)
+				log.Printf("Error turning on signal %s: %v", signals[0].Id, err)
+			}
+			return
+		} else {
+			// expect the last active signal
+			lastActiveSignal := currentTimer.LastActiveSignal
+
+			// Get the last active signal
+			for i, signal := range signals {
+				if signal.Id == lastActiveSignal {
+					// Move the last active signal to the front of the slice
+					signals = append(signals[:i], signals[i+1:]...)
+
+					// Add the last active signal to the front of the slice
+					err = functions.TurnOffSignal(signal)
+					if err != nil {
+						log.Printf("Error activing turning off signal %s: %v", signal.Id, err)
+					}
+					break
+				}
+			}
+
+			// Sort signals by vehicle count in descending order
+			sort.Slice(signals, func(i, j int) bool {
+				return signals[i].Count > signals[j].Count
+			})
+
+			// Get the signal with the highest count
+			if len(signals) == 0 {
+				return
+			}
+			signal := signals[0]
+
+			// Calculate the predicted clearance time
+			clearanceTime := predictClearanceTime(signal.Count)
+
+			// Set the new timer for the next signal change
+			nextChangeTime := now.Add(time.Duration(clearanceTime) * time.Second)
+
+			// Turn on the signal with the highest count and set duration
+			err = functions.TurnOnSignal(signal)
+			if err != nil {
+				log.Printf("Error turning on signal %s: %v", signal.Id, err)
+			}
+			err = functions.SetSignalTimer(nextChangeTime, signal.Id)
+
+			if err != nil {
+				log.Printf("Error setting signal timer: %v", err)
+			}
+
+			defer queues.EnqueueTask(asynq.NewTask(constants.SIGNAL_CHANGE, []byte("")))
+
+			// Turn off all other signals
+			for _, d := range signals[1:] {
+				err = functions.TurnOffSignal(d)
+				if err != nil {
+					log.Printf("Error turning off signal %s: %v", d.Id, err)
+				}
 			}
 		}
+
 	}
 }
 

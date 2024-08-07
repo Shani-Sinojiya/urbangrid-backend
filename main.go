@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -47,6 +48,13 @@ func main() {
 		signales.Post("/", handlers.SetSignal)
 	}
 
+	emergency := app.Group("/emergency-vehicle")
+	{
+		emergency.Post("/enable", handlers.SetEmergencyVehicleDetectEnable)
+		emergency.Post("/disable", handlers.SetEmergencyVehicleDetectDisable)
+		emergency.Get("/", handlers.GetEmergency)
+	}
+
 	ws := app.Group("/ws")
 	{
 		ws.Get("/signal", websocket.New(handlers.SignalSocket, websocket.Config{
@@ -58,7 +66,14 @@ func main() {
 			WriteBufferSize: 1024,
 			ReadBufferSize:  1024,
 		}))
+
+		ws.Get("/emergency", websocket.New(handlers.EmergencySocket, websocket.Config{
+			WriteBufferSize: 1024,
+			ReadBufferSize:  1024,
+		}))
 	}
+
+	app.Delete("/everything", handlers.DeleteEverything)
 
 	go func() {
 		if err := app.Listen(":8726"); err != nil {
@@ -79,6 +94,7 @@ func main() {
 
 	// Initialize and start the cron job
 	go func() {
+		time.Sleep(time.Second * 10)
 		c := cron.New()
 
 		// Schedule the update function to run every minute

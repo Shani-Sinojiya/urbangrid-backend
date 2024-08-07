@@ -3,6 +3,7 @@ package functions
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"urbangrid.com/database"
@@ -177,4 +178,54 @@ func GetSignalTimer() (timer, error) {
 	}
 
 	return t, nil
+}
+
+func DropRedis() error {
+	return database.RedisClient.FlushAll(context.Background()).Err()
+}
+
+func SetEmergencyVehicleDetected(signalid string, detected bool) error {
+	info := database.RedisClient.Set(context.Background(), "emergency_"+signalid, detected, 0)
+	return info.Err()
+}
+
+func GetEmergencyVehicleDetected(signalid string) (bool, error) {
+	info := database.RedisClient.Get(context.Background(), "emergency_"+signalid)
+	if info.Err() != nil {
+		return false, info.Err()
+	}
+
+	return info.Val() == "true", nil
+}
+
+func GetAllEmergencyVehicleDetected() (map[string]bool, error) {
+	keys, err := database.RedisClient.Keys(context.Background(), "emergency_*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	data := make(map[string]bool)
+
+	for _, key := range keys {
+		val, err := database.RedisClient.Get(context.Background(), key).Result()
+		if err != nil {
+			return nil, err
+		}
+
+		newKey := strings.ReplaceAll(key, "emergency_", "")
+
+		data[newKey] = val == "true"
+	}
+
+	return data, nil
+}
+
+func IsExistKeyOfEmergencyVehicleDetected(signal_id string) (bool, error) {
+	info := database.RedisClient.Exists(context.Background(), "emergency_"+signal_id)
+	if info.Err() != nil {
+		return false, info.Err()
+	}
+
+	return info.Val() == 1, nil
+
 }
