@@ -95,7 +95,7 @@ func GetSignalData() ([]model, error) {
 	}
 
 	for _, key := range keys {
-		if key == "timer" {
+		if key == "timer" || strings.HasPrefix(key, "emergency_") {
 			continue
 		}
 		val, err := database.RedisClient.Get(context.Background(), key).Result()
